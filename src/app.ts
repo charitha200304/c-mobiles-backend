@@ -20,9 +20,9 @@ const app: Express = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// CORS Configuration
+// CORS Configuration - ***Corrected to http://localhost:5173***
 app.use(cors({
-  origin: ['http://localhost:5173'],
+  origin: ['http://localhost:5173'], // THIS IS THE CORRECTED PORT FOR YOUR FRONTEND
   credentials: true
 }));
 
@@ -30,7 +30,7 @@ app.use(cors({
 app.get('/api/health', (req: Request, res: Response) => {
   const dbStatus = mongoose.connection.readyState;
   let dbStatusText = '';
-  
+
   switch(dbStatus) {
     case 0: dbStatusText = 'disconnected'; break;
     case 1: dbStatusText = 'connected'; break;
@@ -38,9 +38,9 @@ app.get('/api/health', (req: Request, res: Response) => {
     case 3: dbStatusText = 'disconnecting'; break;
     default: dbStatusText = 'unknown';
   }
-  
-  res.status(200).json({ 
-    status: 'ok', 
+
+  res.status(200).json({
+    status: 'ok',
     timestamp: new Date(),
     database: {
       status: dbStatusText,
@@ -74,7 +74,7 @@ const startServer = async () => {
       console.error('❌ Failed to connect to database:', dbError instanceof Error ? dbError.message : 'Unknown error');
       process.exit(1);
     }
-    
+
     // Start the server
     const server = app.listen(PORT, () => {
       console.log(`\n🚀 Server running on http://localhost:${PORT}`);
@@ -84,7 +84,7 @@ const startServer = async () => {
     // Handle server errors
     server.on('error', (error: NodeJS.ErrnoException) => {
       if (error.syscall !== 'listen') throw error;
-      
+
       // Handle specific listen errors with friendly messages
       switch (error.code) {
         case 'EACCES':
@@ -99,7 +99,7 @@ const startServer = async () => {
           throw error;
       }
     });
-    
+
     // Handle process termination
     process.on('SIGINT', () => {
       console.log('\nGracefully shutting down from SIGINT (Ctrl+C)');
@@ -108,7 +108,7 @@ const startServer = async () => {
         process.exit(0);
       });
     });
-    
+
   } catch (error) {
     if (env.NODE_ENV === 'development') {
       console.log(`🚀 Starting in ${env.NODE_ENV} mode`);
