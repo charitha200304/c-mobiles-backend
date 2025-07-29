@@ -1,4 +1,5 @@
-import { Product, IProduct } from '../models/product.model';
+// src/services/product.service.ts
+import { Product, IProduct } from '../models/product.model'; // Assuming your product.model is correctly defined
 import { FilterQuery, UpdateQuery } from 'mongoose';
 
 class ProductService {
@@ -47,13 +48,13 @@ class ProductService {
      * Update an existing product
      */
     async updateProduct(
-        id: string, 
+        id: string,
         updateData: UpdateQuery<IProduct>
     ): Promise<IProduct | null> {
         try {
             return await Product.findByIdAndUpdate(
-                id, 
-                updateData, 
+                id,
+                updateData,
                 { new: true, runValidators: true }
             );
         } catch (error) {

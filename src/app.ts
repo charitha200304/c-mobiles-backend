@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import productRoutes from './routes/product.routes';
 import orderRoutes from './routes/order.routes';
+import subscriptionRoutes from './routes/emailsubscription.routes'; // <-- ADDED THIS IMPORT
 import { authenticateToken } from './middleware/auth.middleware';
 
 // Load environment variables
@@ -36,7 +37,7 @@ app.get('/api/health', (req: Request, res: Response) => {
     case 1: dbStatusText = 'connected'; break;
     case 2: dbStatusText = 'connecting'; break;
     case 3: dbStatusText = 'disconnecting'; break;
-    default: dbStatusText = 'unknown';
+    default: dbStatusText = 'unknown'; // Added default case for robustness
   }
 
   res.status(200).json({
@@ -55,6 +56,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users',  userRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', authenticateToken, orderRoutes);
+app.use('/api/subscriptions', subscriptionRoutes); // <-- ADDED THIS LINE TO USE SUBSCRIPTION ROUTES
 
 // 404 Handler
 app.use(notFound);
@@ -63,7 +65,7 @@ app.use(notFound);
 app.use(errorHandler);
 
 // Use port from environment configuration
-const PORT = env.PORT;
+const PORT = env.PORT || 3000; // Added default 3000 if env.PORT is not set
 
 const startServer = async () => {
   try {
