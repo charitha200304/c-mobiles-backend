@@ -1,29 +1,25 @@
-// src/models/subscription.model.ts
-
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 
 export interface ISubscription extends Document {
     email: string;
     createdAt: Date;
 }
 
-const SubscriptionSchema: Schema = new Schema({
-    email: {
-        type: String,
-        required: [true, 'Email is required'],
-        unique: true, // <--- KEEP THIS ONE for the unique index
-        trim: true,
-        lowercase: true,
-        match: [/.+@.+\..+/, 'Please enter a valid email address'] // Basic email format validation
+const subscriptionSchema: Schema = new Schema(
+    {
+        email: {
+            type: String,
+            required: true,
+            unique: true, // Prevent duplicates
+            lowercase: true,
+            trim: true,
+        },
     },
-    createdAt: {
-        type: Date,
-        default: Date.now
+    {
+        timestamps: true, // Automatically adds createdAt/updatedAt
     }
-});
+);
 
-// REMOVED: SubscriptionSchema.index({ email: 1 }, { unique: true }); // This line was redundant
-
-const Subscription = mongoose.model<ISubscription>('Subscription', SubscriptionSchema);
+const Subscription = mongoose.model<ISubscription>('Subscription', subscriptionSchema);
 
 export default Subscription;

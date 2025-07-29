@@ -1,35 +1,76 @@
-// src/app.ts (or src/index.ts) - Main backend entry file
-import express from 'express';
+import express, { Express } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import connectDB from './db/DBConnection'; // Your database connection
-import productRouter from './routes/product.routes'; // Existing product routes
-import authRouter from './routes/auth.routes'; // Your existing auth routes
-import contactRouter from './routes/contact.routes'; // <-- NEW: Import contact routes
+import mongoose from 'mongoose';
+
+import connectDB from './db/DBConnection';
+import { env } from './config/env.config';
+import { errorHandler, notFound } from './middleware/error.middleware';
+import { authenticateToken } from './middleware/auth.middleware';
+
+import authRoutes from './routes/auth.routes';
+import userRoutes from './routes/user.routes';
+import productRoutes from './routes/product.routes';
+import orderRoutes from './routes/order.routes';
+import subscriptionRoutes from './routes/emailsubscription.routes';
+import contactRoutes from './routes/contact.routes'; // optional
 
 dotenv.config();
 
-const app = express();
+const app: Express = express();
 
 // Middleware
-app.use(cors()); // Enable CORS
-app.use(express.json()); // Parse JSON request bodies
+app.use(cors({ origin: ['http://localhost:5173'], credentials: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Connect to MongoDB
-connectDB();
+// Health check
+app.get('/api/health', (req, res) => {
+    const dbStatus = mongoose.connection.readyState;
+    const statusMap: Record<number, string> = {
+        0: 'disconnected',
+        1: 'connected',
+        2: 'connecting',
+        3: 'disconnecting',
+    };
+
+    res.status(200).json({
+        status: 'ok',
+        timestamp: new Date(),
+        database: {
+            status: statusMap[dbStatus] || 'unknown',
+            connection: process.env.MONGO_URI ? 'Configured' : 'Not configured',
+            dbName: mongoose.connection.db?.databaseName || 'Not connected',
+        },
+    });
+});
 
 // Routes
-app.use('/api/products', productRouter);
-app.use('/api/auth', authRouter); // Assuming you have an auth router
-app.use('/api/contact', contactRouter); // <-- NEW: Use contact routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/orders', authenticateToken, orderRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/contact', contactRoutes); // optional
 
-// Basic test route
-app.get('/', (req, res) => {
-    res.send('C-Mobiles Backend API is running!');
-});
+// 404 and error handlers
+app.use(notFound);
+app.use(errorHandler);
 
-const PORT = process.env.PORT || 3000;
+// Start Server
+const PORT = env.PORT || 3000;
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+const startServer = async () => {
+    try {
+        await connectDB();
+
+        app.listen(PORT, () => {
+            console.log(`🚀 Server running at http://localhost:${PORT}`);
+        });
+    } catch (err) {
+        console.error('❌ Failed to start server:', err);
+        process.exit(1);
+    }
+};
+
+startServer();
