@@ -2,8 +2,7 @@
 import { Request, Response } from 'express';
 import { productService } from '../services/product.service';
 import { IProduct } from '../models/product.model';
-// Assuming ProductData interface is available in a shared location or redefined here
-// For simplicity, I'll define a minimal ProductData type here for transformation
+
 interface ProductDataForFrontend {
     id: string;
     name: string;
@@ -14,17 +13,16 @@ interface ProductDataForFrontend {
     originalPrice?: number;
     currency: string;
     isOnSale: boolean;
-    description?: string; // Added description
-    stock?: number; // Added stock
-    category?: string; // Added category
+    description?: string;
+    stock?: number;
+    category?: string;
 }
 
-// Get all products
 export const getAllProducts = async (req: Request, res: Response) => {
     try {
         console.log('Fetching all products...');
         const products = await productService.getAllProducts();
-        
+
         if (!Array.isArray(products)) {
             console.error('Expected products to be an array, got:', typeof products);
             return res.status(500).json({
@@ -35,7 +33,6 @@ export const getAllProducts = async (req: Request, res: Response) => {
 
         console.log(`Found ${products.length} products`);
 
-        // Transform IProduct documents to ProductData format for the frontend
         const transformedProducts: ProductDataForFrontend[] = products
             .filter(p => {
                 const isValid = p && p._id != null;
@@ -45,9 +42,9 @@ export const getAllProducts = async (req: Request, res: Response) => {
                 return isValid;
             })
             .map(p => ({
-                id: p._id?.toString() || 'unknown', // Safely convert numeric ID to string
+                id: p._id?.toString() || 'unknown',
                 name: p.name || 'Unnamed Product',
-                image: p.imageUrl || 'default-product.png',
+                image: p.imageUrl || '/placeholder.svg',
                 rating: p.rating ?? 0,
                 specs: Array.isArray(p.specs) ? p.specs : [],
                 price: p.price ?? 0,
@@ -68,15 +65,14 @@ export const getAllProducts = async (req: Request, res: Response) => {
         });
     } catch (error) {
         console.error('Error in getAllProducts controller:', error);
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             message: 'Error fetching products',
             error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
         });
     }
 };
 
-// Get single product
 export const getProduct = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
@@ -89,11 +85,10 @@ export const getProduct = async (req: Request, res: Response) => {
             return res.status(404).json({ message: 'Product not found' });
         }
 
-        // Transform single product for frontend
         const transformedProduct: ProductDataForFrontend = {
             id: product._id.toString(),
             name: product.name,
-            image: product.imageUrl || 'default-product.png',
+            image: product.imageUrl || '/placeholder.svg',
             rating: product.rating !== undefined ? product.rating : 0,
             specs: product.specs || [],
             price: product.price,
@@ -112,12 +107,10 @@ export const getProduct = async (req: Request, res: Response) => {
     }
 };
 
-// Create new product
 export const saveProduct = async (req: Request, res: Response) => {
     try {
         const { name, description, price, stock, category, imageUrl, rating, specs, currency, isOnSale, originalPrice } = req.body;
 
-        // Basic validation
         if (!name || !description || price === undefined || !category) {
             return res.status(400).json({
                 message: 'Missing required fields',
@@ -125,14 +118,13 @@ export const saveProduct = async (req: Request, res: Response) => {
             });
         }
 
-        // Create a plain object that matches the expected type for ProductService
-        const productData: Partial<IProduct> = { // Use Partial<IProduct> to allow for optional fields
+        const productData: Partial<IProduct> = {
             name: String(name),
             description: String(description),
             price: parseFloat(String(price)),
             stock: stock ? parseInt(String(stock), 10) : 0,
             category: String(category),
-            imageUrl: imageUrl ? String(imageUrl) : undefined, // imageUrl can be optional
+            imageUrl: imageUrl ? String(imageUrl) : undefined,
             rating: rating !== undefined ? parseFloat(String(rating)) : undefined,
             specs: specs && Array.isArray(specs) ? specs.map(String) : undefined,
             currency: currency ? String(currency) : undefined,
@@ -140,7 +132,7 @@ export const saveProduct = async (req: Request, res: Response) => {
             originalPrice: originalPrice !== undefined ? parseFloat(String(originalPrice)) : undefined,
         };
 
-        const newProduct = await productService.createProduct(productData as any); // Cast to any due to Partial<IProduct>
+        const newProduct = await productService.createProduct(productData as any);
 
         res.status(201).json(newProduct);
     } catch (error) {
@@ -149,7 +141,6 @@ export const saveProduct = async (req: Request, res: Response) => {
     }
 };
 
-// Update product
 export const updateProduct = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
@@ -159,7 +150,6 @@ export const updateProduct = async (req: Request, res: Response) => {
 
         const { name, description, price, stock, category, imageUrl, rating, specs, currency, isOnSale, originalPrice } = req.body;
 
-        // Create a plain object with only the provided fields
         const updateData: Partial<IProduct> = {};
 
         if (name !== undefined) updateData.name = String(name);
@@ -191,7 +181,6 @@ export const updateProduct = async (req: Request, res: Response) => {
     }
 };
 
-// Delete product
 export const deleteProduct = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
@@ -212,7 +201,6 @@ export const deleteProduct = async (req: Request, res: Response) => {
     }
 };
 
-// Search products
 export const searchProducts = async (req: Request, res: Response) => {
     try {
         const { q } = req.query;
