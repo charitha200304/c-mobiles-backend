@@ -1,160 +1,115 @@
 import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
-
-dotenv.config();
-
-interface EmailOptions {
-  to: string;
-  subject: string;
-  html: string;
-}
+import { env } from '../config/env.config';
 
 class EmailService {
   private transporter: nodemailer.Transporter;
 
   constructor() {
     this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: false,
+      host: env.SMTP_HOST,
+      port: env.SMTP_PORT,
+      secure: env.SMTP_PORT === 465, // true for 465, false for other ports
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD
-      }
+        user: env.SMTP_USER,
+        pass: env.SMTP_PASSWORD,
+      },
     });
   }
 
-  async sendEmail(options: EmailOptions): Promise<boolean> {
+  /**
+   * Send welcome email to new users
+   */
+  async sendWelcomeEmail(email: string, name: string): Promise<boolean> {
     try {
       const mailOptions = {
-        from: process.env.EMAIL_FROM || 'noreply@cmobiles.com',
-        to: options.to,
-        subject: options.subject,
-        html: options.html
+        from: env.SMTP_FROM,
+        to: email,
+        subject: '👋 Welcome to C-Mobiles!',
+        html: `
+          <div style="font-family: 'Segoe UI', Arial, sans-serif; width: 100%; max-width: 600px; margin: 0 auto; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+            <div style="background: linear-gradient(135deg, #1a75ff, #0066cc); padding: 20px 15px; text-align: center; width: 100%; box-sizing: border-box;">
+              <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 600; line-height: 1.3;">
+                <span style="font-size: 28px; display: block; margin-bottom: 5px;">📱</span>
+                C-<span style="color: #ffeb3b;">Mobiles</span>
+              </h1>
+              <p style="color: rgba(255, 255, 255, 0.9); margin: 8px 0 0; font-size: 14px; line-height: 1.4;">Your Mobile Technology Partner</p>
+            </div>
+            
+            <div style="padding: 20px 15px; background: #ffffff; box-sizing: border-box; width: 100%;">
+              <h2 style="color: #333333; margin: 0 0 15px 0; font-size: 20px; line-height: 1.4;">👋 Welcome Aboard, ${name}!</h2>
+              
+              <p style="color: #333333; font-size: 15px; line-height: 1.6; margin: 15px 0;">
+                Thank you for joining the C-Mobiles family! We're thrilled to have you with us. 🎉
+              </p>
+              
+              <div style="background: #f8f9ff; border-radius: 8px; padding: 15px; margin: 20px 0; box-sizing: border-box; width: 100%;">
+                <h3 style="color: #1a1a1a; margin: 0 0 12px 0; font-size: 17px; line-height: 1.4;">🌟 Welcome to C-Mobiles! 🌟</h3>
+                <p style="margin: 0 0 12px 0; color: #333; font-size: 14px; line-height: 1.5;">
+                  At C-Mobiles, we're passionate about bringing you the latest in smartphone technology and accessories. 
+                  From high-performance flagship phones to essential gadgets, we've got you covered!
+                </p>
+                <p style="margin: 0 0 8px 0; color: #333; font-size: 15px; font-weight: 600;">
+                  🚀 Why choose us?
+                </p>
+                <ul style="margin: 0 0 0 15px; padding: 0; color: #333; font-size: 14px; line-height: 1.6;">
+                  <li style="margin-bottom: 6px;">🛒 Wide selection of top-brand smartphones and gadgets</li>
+                  <li style="margin-bottom: 6px;">⚡ Lightning-fast delivery to your doorstep</li>
+                  <li style="margin-bottom: 6px;">🔒 Secure shopping with multiple payment options</li>
+                  <li style="margin-bottom: 6px;">🛠️ Expert technical support for your devices</li>
+                  <li>💰 Exclusive member-only deals and discounts</li>
+                </ul>
+              </div>
+              
+              <div style="background: #e6f7ff; border-left: 4px solid #1a75ff; padding: 12px 15px; margin: 20px 0; border-radius: 0 4px 4px 0; box-sizing: border-box; width: 100%;">
+                <p style="margin: 0; color: #333; font-style: italic; font-size: 14px; line-height: 1.5;">
+                  💡 <strong>Pro Tip:</strong> Discover our latest smartphones and exclusive pre-order deals on our website!
+                </p>
+              </div>
+              
+              <div style="text-align: center; margin: 25px 0; width: 100%;">
+                <a href="${env.CORS_ORIGIN}" 
+                   style="display: inline-block; background: #0066cc; color: white; 
+                          padding: 12px 25px; text-decoration: none; border-radius: 4px; 
+                          font-weight: 600; font-size: 15px; text-transform: uppercase;
+                          box-shadow: 0 2px 4px rgba(0,0,0,0.1); width: 90%; max-width: 280px;
+                          box-sizing: border-box; margin: 0 auto;">
+                  🛍️ Start Shopping Now
+                </a>
+              </div>
+              
+              <p style="color: #666666; font-size: 14px; line-height: 1.6; margin: 0 0 5px 0;">
+                Need help? Our support team is here for you at 
+                <a href="mailto:support@cmobiles.com" style="color: #0066cc; text-decoration: none; word-break: break-all;">
+                  support@cmobiles.com
+                </a> 📧
+              </p>
+            </div>
+            
+            <div style="background: #f5f5f5; padding: 15px; text-align: center; font-size: 13px; color: #777777; border-top: 1px solid #eeeeee; box-sizing: border-box; width: 100%;">
+              <div style="margin-bottom: 10px; line-height: 1.8;">
+                <a href="${env.CORS_ORIGIN}/about" style="color: #0066cc; text-decoration: none; margin: 0 8px; display: inline-block;">About Us</a>
+                <span style="color: #dddddd; margin: 0 5px;">•</span>
+                <a href="${env.CORS_ORIGIN}/smartphones" style="color: #0066cc; text-decoration: none; margin: 0 8px; display: inline-block;">Smartphones</a>
+                <span style="color: #dddddd; margin: 0 5px;">•</span>
+                <a href="${env.CORS_ORIGIN}/contact" style="color: #0066cc; text-decoration: none; margin: 0 8px; display: inline-block;">Contact</a>
+              </div>
+              <p style="margin: 0 0 8px 0; font-size: 13px; line-height: 1.4;">
+                © ${new Date().getFullYear()} C-Mobiles. All rights reserved.
+              </p>
+              <p style="margin: 0; font-size: 11px; color: #aaaaaa; line-height: 1.4;">
+                You're receiving this email because you signed up for a C-Mobiles account.
+              </p>
+            </div>
+          </div>
+        `,
       };
 
       await this.transporter.sendMail(mailOptions);
       return true;
     } catch (error) {
-      console.error('Error sending email:', error);
+      console.error('Error sending welcome email:', error);
       return false;
     }
-  }
-
-  async sendWelcomeEmail(email: string, name: string): Promise<boolean> {
-    const subject = '🎉 Welcome to CMobiles!';
-    const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Welcome</title>
-            <style>
-                body {
-                    margin: 0;
-                    padding: 0;
-                    font-family: 'Segoe UI', sans-serif;
-                    background-color: #0f172a;
-                    color: #e2e8f0;
-                }
-                .container {
-                    max-width: 600px;
-                    margin: 0 auto;
-                    padding: 40px 20px;
-                    background-color: #1e293b;
-                    border-radius: 10px;
-                }
-                h1 {
-                    font-size: 28px;
-                    font-weight: 600;
-                    color: #ffffff;
-                    margin-bottom: 20px;
-                    text-align: center;
-                }
-                p {
-                    font-size: 16px;
-                    color: #cbd5e1;
-                    line-height: 1.6;
-                    margin-bottom: 20px;
-                }
-                ul {
-                    padding-left: 20px;
-                    color: #94a3b8;
-                }
-                li {
-                    margin-bottom: 10px;
-                }
-                .button {
-                    display: block;
-                    width: fit-content;
-                    margin: 30px auto;
-                    padding: 14px 28px;
-                    background: linear-gradient(90deg, #6366f1, #8b5cf6);
-                    color: white;
-                    text-align: center;
-                    border-radius: 8px;
-                    text-decoration: none;
-                    font-weight: 500;
-                    font-size: 16px;
-                }
-                .footer {
-                    text-align: center;
-                    font-size: 14px;
-                    color: #64748b;
-                    margin-top: 40px;
-                }
-                a {
-                    color: #818cf8;
-                    text-decoration: none;
-                }
-                @media (max-width: 600px) {
-                    .container {
-                        padding: 30px 15px;
-                    }
-                    h1 {
-                        font-size: 24px;
-                    }
-                    p {
-                        font-size: 15px;
-                    }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1>👋 Welcome, ${name}!</h1>
-                <p>We're thrilled to have you join <strong>CMobiles</strong> — your go-to destination for the latest smartphones and accessories. 🎉</p>
-                
-                <p>Here's what you can do now: 🚀</p>
-                <ul>
-                    <li>🛍️ Explore and shop the newest devices</li>
-                    <li>❤️ Save and manage your favorite products</li>
-                    <li>🔥 Enjoy exclusive member-only offers</li>
-                    <li>📦 Track your orders in real-time</li>
-                </ul>
-
-                <a href="${process.env.FRONTEND_URL || 'https://cmobiles.com'}/dashboard" class="button">🛒 Start Shopping</a>
-
-                <p style="text-align:center;">Need help? 💬 <a href="${process.env.FRONTEND_URL || 'https://cmobiles.com'}/contact">Contact our support team</a></p>
-
-                <div class="footer">
-                    <p>© ${new Date().getFullYear()} CMobiles. All rights reserved.</p>
-                    <p>📍 123 Mobile Street, Tech City, TC 12345</p>
-                    <p>
-                        <a href="#">Unsubscribe</a> | 
-                        <a href="#">Privacy Policy</a>
-                    </p>
-                </div>
-            </div>
-        </body>
-        </html>`;
-
-    return this.sendEmail({
-      to: email,
-      subject,
-      html
-    });
   }
 }
 

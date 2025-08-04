@@ -1,5 +1,4 @@
-// src/services/product.service.ts
-import { Product, IProduct } from '../models/product.model'; // Assuming your product.model is correctly defined
+import { Product, IProduct } from '../models/product.model';
 import { FilterQuery, UpdateQuery } from 'mongoose';
 
 class ProductService {
@@ -17,25 +16,21 @@ class ProductService {
     /**
      * Get a single product by ID
      */
-    async getProductById(id: string): Promise<IProduct | null> {
+    async getProductById(id: string | number): Promise<IProduct | null> {
         try {
-            return await Product.findById(id);
+            // Convert string ID to number if needed
+            const productId = typeof id === 'string' ? parseInt(id, 10) : id;
+            return await Product.findById(productId);
         } catch (error) {
-            throw new Error('Product not found');
+            console.error('Error in getProductById:', error);
+            throw new Error('Error finding product');
         }
     }
 
     /**
      * Create a new product
      */
-    async createProduct(productData: {
-        name: string;
-        description: string;
-        price: number;
-        stock: number;
-        category: string;
-        imageUrl?: string;
-    }): Promise<IProduct> {
+    async createProduct(productData: Partial<IProduct>): Promise<IProduct> { // Changed type to Partial<IProduct>
         try {
             const product = new Product(productData);
             return await product.save();
@@ -48,12 +43,14 @@ class ProductService {
      * Update an existing product
      */
     async updateProduct(
-        id: string,
+        id: string | number,
         updateData: UpdateQuery<IProduct>
     ): Promise<IProduct | null> {
         try {
+            // Convert string ID to number if needed
+            const productId = typeof id === 'string' ? parseInt(id, 10) : id;
             return await Product.findByIdAndUpdate(
-                id,
+                productId,
                 updateData,
                 { new: true, runValidators: true }
             );
@@ -65,11 +62,14 @@ class ProductService {
     /**
      * Delete a product
      */
-    async deleteProduct(id: string): Promise<boolean> {
+    async deleteProduct(id: string | number): Promise<boolean> {
         try {
-            const result = await Product.findByIdAndDelete(id);
-            return result !== null;
+            // Convert string ID to number if needed
+            const productId = typeof id === 'string' ? parseInt(id, 10) : id;
+            const result = await Product.findByIdAndDelete(productId);
+            return !!result;
         } catch (error) {
+            console.error('Error in deleteProduct:', error);
             throw new Error('Error deleting product');
         }
     }

@@ -1,4 +1,3 @@
-// src/routes/product.routes.ts
 import { Router } from "express";
 import {
     deleteProduct,
@@ -10,6 +9,7 @@ import {
 } from "../controller/product.controller";
 
 const productRouter: Router = Router();
+
 
 productRouter.get("/get-all-products", getAllProducts);
 productRouter.get("/search", searchProducts);

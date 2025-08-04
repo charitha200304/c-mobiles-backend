@@ -1,20 +1,24 @@
+// src/routes/contact.routes.ts
 import { Router } from 'express';
 import {
-    submitContactMessage,
+    submitContactForm,
     getAllContactMessages,
-    markContactMessageAsRead,
+    getContactMessage,
+    markMessageAsRead,
     deleteContactMessage
 } from '../controller/contact.controller';
+import { authenticateToken } from '../middleware/auth.middleware'; // Assuming you have this middleware
 
 const contactRouter: Router = Router();
 
-// Route for submitting a new contact message
-contactRouter.post('/', submitContactMessage);
+// Public route for submitting contact form
+contactRouter.post('/save-contact', submitContactForm);
 
-// --- Optional: Admin routes for managing messages ---
-// You would typically add authentication middleware here, e.g., contactRouter.get('/', authMiddleware, getAllContactMessages);
-contactRouter.get('/', getAllContactMessages); // Get all messages
-contactRouter.put('/:id/read', markContactMessageAsRead); // Mark as read
-contactRouter.delete('/:id', deleteContactMessage); // Delete message
+// Admin routes (require authentication)
+// You might want to add an authorization middleware here as well (e.g., isAdmin)
+contactRouter.get('/get-all-messages', getAllContactMessages);
+contactRouter.get('/get-all-messages/:id', getContactMessage);
+contactRouter.put('/update-message/:id',  markMessageAsRead);
+contactRouter.delete('/delete-message/:id', deleteContactMessage);
 
 export default contactRouter;

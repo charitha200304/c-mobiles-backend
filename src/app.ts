@@ -9,8 +9,8 @@ import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import productRoutes from './routes/product.routes';
 import orderRoutes from './routes/order.routes';
-import subscriptionRoutes from './routes/emailsubscription.routes'; // <-- ADDED THIS IMPORT
 import { authenticateToken } from './middleware/auth.middleware';
+import contactRoutes from "./routes/contact.routes";
 
 // Load environment variables
 config();
@@ -21,9 +21,9 @@ const app: Express = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// CORS Configuration - ***Corrected to http://localhost:5173***
+// CORS Configuration - CRUCIAL: Ensure this includes your frontend origin(s)
 app.use(cors({
-  origin: ['http://localhost:5173'], // THIS IS THE CORRECTED PORT FOR YOUR FRONTEND
+  origin: ['http://localhost:5173', 'http://localhost:5174'], // Make sure http://localhost:5174 is listed here
   credentials: true
 }));
 
@@ -37,7 +37,7 @@ app.get('/api/health', (req: Request, res: Response) => {
     case 1: dbStatusText = 'connected'; break;
     case 2: dbStatusText = 'connecting'; break;
     case 3: dbStatusText = 'disconnecting'; break;
-    default: dbStatusText = 'unknown'; // Added default case for robustness
+    default: dbStatusText = 'unknown';
   }
 
   res.status(200).json({
@@ -47,16 +47,17 @@ app.get('/api/health', (req: Request, res: Response) => {
       status: dbStatusText,
       connection: process.env.MONGO_URI ? 'Configured' : 'Not configured',
       dbName: mongoose.connection.db?.databaseName || 'Not connected'
-    }
+    },
+    uptime: process.uptime()
   });
 });
 
-// API Routes
+// API Routes - Ensure these are defined AFTER the CORS middleware
 app.use('/api/auth', authRoutes);
 app.use('/api/users',  userRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api/orders', authenticateToken, orderRoutes);
-app.use('/api/subscriptions', subscriptionRoutes); // <-- ADDED THIS LINE TO USE SUBSCRIPTION ROUTES
+app.use('/api/orders', orderRoutes);
+app.use('/api/contact', contactRoutes);
 
 // 404 Handler
 app.use(notFound);
@@ -64,8 +65,8 @@ app.use(notFound);
 // Error Handler
 app.use(errorHandler);
 
-// Use port from environment configuration
-const PORT = env.PORT || 3000; // Added default 3000 if env.PORT is not set
+// Use port from environment configuration, with a fallback
+const PORT = env.PORT || 3000; // Ensure this matches your backend's actual running port
 
 const startServer = async () => {
   try {
@@ -121,6 +122,5 @@ const startServer = async () => {
   }
 };
 
-// Export the app and startServer for programmatic usage
 export { startServer };
 export default app;
