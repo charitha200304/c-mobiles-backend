@@ -11,6 +11,7 @@ import productRoutes from './routes/product.routes';
 import orderRoutes from './routes/order.routes';
 import { authenticateToken } from './middleware/auth.middleware';
 import contactRoutes from "./routes/contact.routes";
+import emailSubscriptionRoutes from "./routes/emailsubscription.routes";
 
 // Load environment variables
 config();
@@ -58,6 +59,7 @@ app.use('/api/users',  userRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api', emailSubscriptionRoutes);
 
 // 404 Handler
 app.use(notFound);

@@ -1,24 +1,11 @@
-// src/routes/contact.routes.ts
+// D:/IdeaProjects/c-mobiles-backend/src/routes/contact.routes.ts
 import { Router } from 'express';
-import {
-    submitContactForm,
-    getAllContactMessages,
-    getContactMessage,
-    markMessageAsRead,
-    deleteContactMessage
-} from '../controller/contact.controller';
-import { authenticateToken } from '../middleware/auth.middleware'; // Assuming you have this middleware
+// FIX: Ensure 'controllers' has an 's' in the path
+import { submitContactForm, getAllContactMessages } from '../controller/contact.controller';
 
-const contactRouter: Router = Router();
+const router = Router();
 
-// Public route for submitting contact form
-contactRouter.post('/save-contact', submitContactForm);
+router.post('/', submitContactForm);
+router.get('/', getAllContactMessages);
 
-// Admin routes (require authentication)
-// You might want to add an authorization middleware here as well (e.g., isAdmin)
-contactRouter.get('/get-all-messages', getAllContactMessages);
-contactRouter.get('/get-all-messages/:id', getContactMessage);
-contactRouter.put('/update-message/:id',  markMessageAsRead);
-contactRouter.delete('/delete-message/:id', deleteContactMessage);
-
-export default contactRouter;
+export default router;
