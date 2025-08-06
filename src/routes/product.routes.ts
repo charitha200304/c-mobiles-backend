@@ -5,7 +5,8 @@ import {
     getProduct,
     saveProduct,
     updateProduct,
-    searchProducts
+    searchProducts,
+    resetProductCounter
 } from "../controller/product.controller";
 
 const productRouter: Router = Router();
@@ -17,5 +18,6 @@ productRouter.get("/:id", getProduct);
 productRouter.post("/save-product", saveProduct);
 productRouter.put("/:id", updateProduct);
 productRouter.delete("/:id", deleteProduct);
+productRouter.post("/reset-counter", resetProductCounter);
 
 export default productRouter;

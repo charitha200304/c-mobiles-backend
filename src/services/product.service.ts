@@ -1,5 +1,6 @@
 import { Product, IProduct } from '../models/product.model';
 import { FilterQuery, UpdateQuery } from 'mongoose';
+import { Counter } from '../models/counter.model';
 
 class ProductService {
     /**
@@ -30,8 +31,18 @@ class ProductService {
     /**
      * Create a new product
      */
-    async createProduct(productData: Partial<IProduct>): Promise<IProduct> { // Changed type to Partial<IProduct>
+    async createProduct(productData: Partial<IProduct>): Promise<IProduct> { 
         try {
+            // Reset product counter if there are no products
+            const productCount = await Product.countDocuments({});
+            if (productCount === 0) {
+                await Counter.findOneAndUpdate(
+                    { _id: 'productId' },
+                    { $set: { seq: 0 } }, // Next product will be 1
+                    { upsert: true, new: true }
+                );
+            }
+            if ('_id' in productData) delete productData._id; // Prevent manual ID override
             const product = new Product(productData);
             return await product.save();
         } catch (error) {
@@ -67,6 +78,12 @@ class ProductService {
             // Convert string ID to number if needed
             const productId = typeof id === 'string' ? parseInt(id, 10) : id;
             const result = await Product.findByIdAndDelete(productId);
+            // Reset product counter if there are no products
+            const productCount = await Product.countDocuments({});
+            if (productCount === 0) {
+                // Remove the counter document to ensure fresh start
+                await Counter.deleteOne({ _id: 'productId' });
+            }
             return !!result;
         } catch (error) {
             console.error('Error in deleteProduct:', error);

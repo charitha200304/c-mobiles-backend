@@ -1,5 +1,6 @@
 import { Document, Schema, model, Model, Types } from 'mongoose';
 import { IUser } from './user.model';
+import { Counter, ICounter } from './counter.model';
 
 // 1. Define interfaces
 export interface IOrder extends Document {
@@ -14,19 +15,6 @@ export interface IOrder extends Document {
     createdAt: Date;
     updatedAt: Date;
 }
-
-// 2. Define counter schema and model
-interface ICounter extends Document {
-    _id: string;
-    seq: number;
-}
-
-const counterSchema = new Schema<ICounter>({
-    _id: { type: String, required: true },
-    seq: { type: Number, default: 1 }
-});
-
-const Counter = model<ICounter>('Counter', counterSchema);
 
 // 3. Define order schema
 const orderSchema = new Schema<IOrder>(

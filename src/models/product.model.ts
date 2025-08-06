@@ -1,4 +1,5 @@
 import { Document, Schema, model, Model } from 'mongoose';
+import { Counter, ICounter } from './counter.model';
 
 // Interface for Product document
 export interface IProduct extends Document {
@@ -17,19 +18,6 @@ export interface IProduct extends Document {
     createdAt: Date;
     updatedAt: Date;
 }
-
-// Counter schema for auto-incrementing product IDs
-interface ICounter extends Document {
-    _id: string;
-    seq: number;
-}
-
-const counterSchema = new Schema<ICounter>({
-    _id: { type: String, required: true },
-    seq: { type: Number, default: 1 }
-});
-
-const Counter = model<ICounter>('ProductCounter', counterSchema);
 
 // Interface for Product model
 interface IProductModel extends Model<IProduct> {

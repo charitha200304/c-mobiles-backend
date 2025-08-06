@@ -2,6 +2,7 @@
 import { Request, Response } from 'express';
 import { productService } from '../services/product.service';
 import { IProduct } from '../models/product.model';
+import { Counter } from '../models/counter.model';
 
 interface ProductDataForFrontend {
     id: string;
@@ -214,5 +215,14 @@ export const searchProducts = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Error searching products:', error);
         res.status(500).json({ message: 'Error searching products', error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+};
+
+export const resetProductCounter = async (req: Request, res: Response) => {
+    try {
+        await Counter.deleteOne({ _id: 'productId' });
+        res.status(200).json({ message: 'Product counter reset successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to reset product counter', error });
     }
 };
