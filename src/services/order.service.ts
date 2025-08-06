@@ -1,4 +1,4 @@
-import { Order, IOrder, IOrderItem } from '../models/order.model';
+import { Order, IOrder } from '../models/order.model';
 import { Product } from '../models/product.model';
 import User from '../models/user.model';
 import { Types } from 'mongoose';
@@ -14,55 +14,45 @@ class OrderService {
 
     async createOrder(
         userId: number,
-        items: Array<{
-            name: string;
-            price: number;
-        }>,
-        username: string
+        itemName: string,
+        itemPrice: number,
+        username: string,
+        status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' = 'pending'
     ): Promise<{ order: IOrder | null; error: string | null; status: number }> {
-        const session = await Order.startSession();
-        session.startTransaction();
-
         try {
             // 1. Validate user exists (using findOne for numeric ID)
-            const user = await User.findOne({ _id: userId }).session(session);
+            const user = await User.findOne({ _id: userId });
             if (!user) {
-                await session.abortTransaction();
                 return this.createOrderResponse(
-                    null, 
+                    null,
                     `User with ID ${userId} not found`,
                     404
                 );
             }
 
             // 2. Calculate total price
-            const totalPrice = items.reduce((sum, item) => sum + item.price, 0);
+            const totalPrice = itemPrice;
 
-            // 3. Create the order
+            // 3. Create the order with flat structure
             const order = new Order({
                 userId: userId,
                 username: username,
-                items: items,
-                status: 'pending',
+                itemName: itemName,
+                itemPrice: itemPrice,
+                itemStatus: status,
+                status: status,
                 totalPrice: totalPrice
             });
 
-            const createdOrder = await order.save({ session });
-            await session.commitTransaction();
-            
+            const createdOrder = await order.save();
             return this.createOrderResponse(createdOrder, null, 201);
-
-        } catch (error: any) {
-            await session.abortTransaction();
+        } catch (error) {
             console.error('Error creating order:', error);
-            console.error('Error in order service:', error);
             return this.createOrderResponse(
-                null, 
-                error.message || 'Error creating order',
+                null,
+                'Failed to create order: ' + (error as Error).message,
                 500
             );
-        } finally {
-            await session.endSession();
         }
     }
 
@@ -80,7 +70,7 @@ class OrderService {
     /**
      * Get orders by user ID
      */
-    async getOrdersByUserId(userId: string): Promise<IOrder[]> {
+    async getOrdersByUserId(userId: number): Promise<IOrder[]> {
         try {
             return await Order.find({ userId: userId })
                 .sort({ createdAt: -1 });
@@ -108,13 +98,13 @@ class OrderService {
     ): Promise<IOrder | null> {
         try {
             const order = await Order.findById(orderId);
-            
+
             if (order) {
                 order.status = 'processing';
                 const updatedOrder = await order.save();
                 return updatedOrder;
             }
-            
+
             return null;
         } catch (error) {
             throw new Error('Error updating order to paid');
@@ -127,13 +117,13 @@ class OrderService {
     async updateOrderToDelivered(orderId: string): Promise<IOrder | null> {
         try {
             const order = await Order.findById(orderId);
-            
+
             if (order) {
                 order.status = 'delivered';
                 const updatedOrder = await order.save();
                 return updatedOrder;
             }
-            
+
             return null;
         } catch (error) {
             throw new Error('Error updating order to delivered');

@@ -3,4 +3,3 @@ export interface OrderItem {
     quantity: number;
     price: number;
 }
-
