@@ -152,32 +152,35 @@ export const getOrdersByUserId = async (req: Request, res: Response): Promise<vo
     }
 };
 
-// Update order status
+// Update order (all fields)
 export const updateOrderStatus = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { status } = req.body;
         const { id } = req.params;
-
         if (!id) {
             res.status(400).json({ success: false, message: 'Order ID is required' });
             return;
         }
 
-        if (!status || !['pending', 'processing', 'shipped', 'delivered', 'cancelled'].includes(status)) {
-            res.status(400).json({
-                success: false,
-                message: 'Valid status is required (pending, processing, shipped, delivered, cancelled)'
-            });
-            return;
+        // Accept all updatable fields from the frontend
+        const updateFields: Partial<IOrder> = {};
+        const allowedFields = [
+            'userId', 'username', 'itemName', 'itemPrice',
+            'status', 'itemStatus', 'totalPrice', 'date'
+        ];
+        for (const field of allowedFields) {
+            if (req.body[field] !== undefined) {
+                updateFields[field as keyof IOrder] = req.body[field];
+            }
         }
 
-        // Update both status and itemStatus to keep them in sync
+        // If status is provided, sync itemStatus with it
+        if (updateFields.status) {
+            updateFields.itemStatus = updateFields.status;
+        }
+
         const updatedOrder = await Order.findByIdAndUpdate(
             id,
-            {
-                status: status,
-                itemStatus: status
-            },
+            updateFields,
             { new: true, runValidators: true }
         );
 
@@ -188,14 +191,14 @@ export const updateOrderStatus = async (req: Request, res: Response): Promise<vo
 
         res.status(200).json({
             success: true,
-            message: 'Order status updated successfully',
+            message: 'Order updated successfully',
             data: updatedOrder
         });
     } catch (error) {
-        console.error('Error updating order status:', error);
+        console.error('Error updating order:', error);
         res.status(500).json({
             success: false,
-            message: 'Error updating order status',
+            message: 'Error updating order',
             error: error instanceof Error ? error.message : 'Unknown error'
         });
     }

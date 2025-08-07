@@ -2,6 +2,7 @@ import { Order, IOrder } from '../models/order.model';
 import { Product } from '../models/product.model';
 import User from '../models/user.model';
 import { Types } from 'mongoose';
+import { Counter } from '../models/counter.model';
 
 class OrderService {
     /**
@@ -12,6 +13,20 @@ class OrderService {
         return { order, error, status };
     }
 
+    /**
+     * Reset order counter if there are no orders
+     */
+    async resetOrderCounterIfNoOrders() {
+        const orderCount = await Order.countDocuments({});
+        if (orderCount === 0) {
+            await Counter.findOneAndUpdate(
+                { _id: 'orderId' },
+                { $set: { seq: 0 } },
+                { upsert: true, new: true }
+            );
+        }
+    }
+
     async createOrder(
         userId: number,
         itemName: string,
@@ -20,6 +35,8 @@ class OrderService {
         status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' = 'pending'
     ): Promise<{ order: IOrder | null; error: string | null; status: number }> {
         try {
+            // Reset order counter if no orders exist
+            await this.resetOrderCounterIfNoOrders();
             // 1. Validate user exists (using findOne for numeric ID)
             const user = await User.findOne({ _id: userId });
             if (!user) {
@@ -72,8 +89,8 @@ class OrderService {
      */
     async getOrdersByUserId(userId: number): Promise<IOrder[]> {
         try {
-            return await Order.find({ userId: userId })
-                .sort({ createdAt: -1 });
+            // Sort by id ascending for user orders as well
+            return await Order.find({ userId: userId }).sort({ id: 1 });
         } catch (error) {
             throw new Error('Error fetching user orders');
         }
@@ -84,7 +101,8 @@ class OrderService {
      */
     async getAllOrders(): Promise<IOrder[]> {
         try {
-            return await Order.find({}).sort({ createdAt: -1 });
+            // Sort by id ascending so orders appear as 1, 4, 5, ...
+            return await Order.find({}).sort({ id: 1 });
         } catch (error) {
             throw new Error('Error fetching all orders');
         }
