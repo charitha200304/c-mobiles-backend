@@ -5,7 +5,7 @@ import { orderService } from '../services/order.service';
 // Create a new order
 export const createOrder = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { userId, itemName, itemPrice, username } = req.body;
+        const { userId, itemName, itemPrice, username, quantity } = req.body;
 
         if (!userId) {
             res.status(400).json({ message: 'User ID is required' });
@@ -38,12 +38,18 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
         }
 
         const orderStatus = req.body.status || 'pending'; // Default to 'pending' if not provided
+        const orderQuantity = quantity === undefined ? 1 : Number(quantity);
+        if (isNaN(orderQuantity) || orderQuantity <= 0) {
+            res.status(400).json({ message: 'Quantity must be a positive number' });
+            return;
+        }
 
-        const { order, error, status: httpStatus = 500 } = await orderService.createOrder(
+        const { order, error, status: httpStatus = 500 } = await orderService.createOrderWithStockCheck(
             userIdNum,
             String(itemName),
             Number(itemPrice),
             String(username),
+            orderQuantity,
             orderStatus
         );
 

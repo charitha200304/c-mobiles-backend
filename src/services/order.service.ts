@@ -74,6 +74,56 @@ class OrderService {
     }
 
     /**
+     * Create a new order and update product stock (with stock check)
+     */
+    async createOrderWithStockCheck(
+        userId: number,
+        itemName: string,
+        itemPrice: number,
+        username: string,
+        quantity: number = 1,
+        status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' = 'pending'
+    ): Promise<{ order: IOrder | null; error: string | null; status: number }> {
+        try {
+            await this.resetOrderCounterIfNoOrders();
+            // 1. Validate user exists
+            const user = await User.findOne({ _id: userId });
+            if (!user) {
+                return this.createOrderResponse(null, `User with ID ${userId} not found`, 404);
+            }
+            // 2. Find product by name
+            const product = await Product.findOne({ name: itemName });
+            if (!product) {
+                return this.createOrderResponse(null, `Product '${itemName}' not found`, 404);
+            }
+            // 3. Check stock
+            if (product.stock < quantity) {
+                return this.createOrderResponse(null, `Not enough stock for '${itemName}'. In stock: ${product.stock}, requested: ${quantity}`, 400);
+            }
+            // 4. Decrement stock and save
+            product.stock -= quantity;
+            await product.save();
+            // 5. Calculate total price
+            const totalPrice = itemPrice * quantity;
+            // 6. Create the order
+            const order = new Order({
+                userId,
+                username,
+                itemName,
+                itemPrice,
+                itemStatus: status,
+                status,
+                totalPrice
+            });
+            const createdOrder = await order.save();
+            return this.createOrderResponse(createdOrder, null, 201);
+        } catch (error) {
+            console.error('Error creating order with stock check:', error);
+            return this.createOrderResponse(null, 'Failed to create order: ' + (error as Error).message, 500);
+        }
+    }
+
+    /**
      * Get order by ID
      */
     async getOrderById(id: string): Promise<IOrder | null> {
